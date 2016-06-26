@@ -36,7 +36,7 @@
         <section>
           <h3>Create a new appointment</h3>
           <label for=practitioner>Choose a practitioner</label>
-          <select id=practitioner required ng-options="option.id as (getFullName(option)) for option in data.practitioners" ng-model="new_appointment_practitioner" ng-change="selectChange()">
+          <select id=practitioner required ng-options="option.id as (getFullName(option)) for option in data.practitioners" ng-model="new_appointment_practitioner">
           </select>
           <p class=info>The appointment date will be set to <span ng-bind="displayDate(current_date)"></span></p>
           <button class=button ng-click="addAppointment(selected_item)" ng-disabled="new_appointment_practitioner === ''">Create Appointment</button>

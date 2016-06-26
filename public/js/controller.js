@@ -10,6 +10,7 @@
 *
 * 1) getting all the data at once and storing it in the client (in a service),
 * then passing it around the various components or
+*
 * 2) making a new request to the db every time as data is requested, this way
 * any time a component needed to lookup data on an object (i.e. an appointment 
 * needs to get more information based on its patient_id), it just makes a new
@@ -24,7 +25,8 @@
 *
 * There's obviously a best practice in there somewhere, very likely outside the 
 * two options I outlined above. I have no problem writing the components one way
-* or the other, I just wanted to make it clear I was aware of the difference.
+* or the other, I just wanted to make it clear I was aware of the difference and
+* that there may be a better way.
 *
 * Thanks for taking the time to review my code. I'm really excited for the 
 * opportunity to work with you!
@@ -40,14 +42,14 @@ var CLINIKO_APP = angular.module("cliniko-test", []);
 // components need to use like the loaded data and helper functions for getting names
 // and objects from IDs.
 CLINIKO_APP.factory('helperService', ['$http', function($http) {
-  var self = this;
+  var service = this;
 
-  self.error = {
+  service.error = {
     exists: false
     , message: ""
   };
 
-  self.data = {
+  service.data = {
     patients: []
     , practitioners: []
     , appointments: []
@@ -55,7 +57,7 @@ CLINIKO_APP.factory('helperService', ['$http', function($http) {
 
   // Gets the full name of any person, taking into account their title if they have one
   // Handles receiving an undefined person as a param so getFullNameByID fails gracefully
-  self.getFullName = function(person) {
+  service.getFullName = function(person) {
     var name = "";
 
     if (!angular.isUndefined(person)) {
@@ -69,78 +71,78 @@ CLINIKO_APP.factory('helperService', ['$http', function($http) {
   };
 
   // Shorthand helper method for returning a fullname by an array and id
-  self.getFullNameByID = function(array, id) {
-    var person = self.getPersonByID(array, id);
-    return self.getFullName(person);
+  service.getFullNameByID = function(array, id) {
+    var person = service.getPersonByID(array, id);
+    return service.getFullName(person);
   };
 
   // Helper method for more modular markup
-  self.getPatientNameByID = function(id) {
-    var person = self.getPersonByID(self.data.patients, id);
-    return self.getFullName(person);
+  service.getPatientNameByID = function(id) {
+    var person = service.getPersonByID(service.data.patients, id);
+    return service.getFullName(person);
   };
 
   // Helper method for more modular markup
-  self.getPractitionerNameByID = function(id) {
-    var person = self.getPersonByID(self.data.practitioners, id);
-    return self.getFullName(person);
+  service.getPractitionerNameByID = function(id) {
+    var person = service.getPersonByID(service.data.practitioners, id);
+    return service.getFullName(person);
   };
 
   // Generic get object by ID. Takes an array and an ID to look it up
   // If nothing is found, undefined is returned
-  self.getPersonByID = function(array, id) {
+  service.getPersonByID = function(array, id) {
     return _.findWhere(array, { id: id });
   };
 
   // Standardizes date formatting throughout the app
-  self.displayDate = function(date) {
+  service.displayDate = function(date) {
     return moment(date).format("MMMM Do YYYY");
   };
 
   // Loads patients from API
-  self.loadPatientData = function() {
+  service.loadPatientData = function() {
     $http.get("http://localhost:3001/patients").then(function(response) {
-      self.data.patients = response.data;
-      self.loadPractitionersData();
+      service.data.patients = response.data;
+      service.loadPractitionersData();
     }, function(data) {
-      self.triggerError("There was an error getting patient data.");
+      service.triggerError("There was an error getting patient data.");
     });
   };
 
   // Loads practitioners from API
-  self.loadPractitionersData = function() {
+  service.loadPractitionersData = function() {
     $http.get("http://localhost:3001/practitioners").then(function(response) {
-      self.data.practitioners = response.data;
-      self.loadAppointmentsData();
+      service.data.practitioners = response.data;
+      service.loadAppointmentsData();
     }, function(data) {
-      self.triggerError("There was an error getting practitioners data.");
+      service.triggerError("There was an error getting practitioners data.");
     });
   };
 
   // Loads appointments from API
-  self.loadAppointmentsData = function() {
+  service.loadAppointmentsData = function() {
     $http.get("http://localhost:3001/appointments").then(function(response) {
-      self.data.appointments = response.data;
+      service.data.appointments = response.data;
     }, function(data) {
-      self.triggerError("There was an error getting appointments data.");
+      service.triggerError("There was an error getting appointments data.");
     });
   };
 
   // Triggers error in console and for user
-  self.triggerError = function(message) {
-    self.error.exists = true;
-    self.error.message = message;
+  service.triggerError = function(message) {
+    service.error.exists = true;
+    service.error.message = message;
     console.log(message);
   };
 
-  return self;
+  return service;
 }]);
 
-// This generic search takes an array and search string.
+// This person filter takes an array and search string.
 // We search on each word of the string, so we split it on whitespace into "terms"
 // Then we compare the terms to the given person's full name
-// If any term matches any property value, the person is considered a match
-CLINIKO_APP.filter('search', ['helperService', function(helperService) {
+// If any term is included in the full name string, the person is considered a match
+CLINIKO_APP.filter('person', ['helperService', function(helperService) {
   return function(array, search) {
     var terms = search.toLowerCase().split(" ");
     return _.filter(array, function(person) {
@@ -180,9 +182,11 @@ CLINIKO_APP.filter('appointment', ['helperService', function(helperService) {
 
 
 // Single "Main" controller
-CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", "searchFilter", "appointmentFilter", 
-  function ($scope, $http, $timeout, helperService, searchFilter, appointmentFilter) {
+CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", "personFilter", "appointmentFilter", 
+  function ($scope, $http, $timeout, helperService, personFilter, appointmentFilter) {
 
+  $scope.data = helperService.data;
+  $scope.error = helperService.error;
   $scope.current_view = "Patients";
   $scope.views = [
     "Patients"
@@ -196,16 +200,14 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
     , results: []
   };
   $scope.selected_item = null;
-  $scope.data = helperService.data;
   $scope.current_date = moment().format();
-  $scope.error = helperService.error;
   $scope.new_appointment_practitioner = 1;
 
   // This is the theoretical POST function for adding a new appointment but since
   // there's no endpoint set up for adding a new apointment this is just an approximation
   $scope.addAppointment = function(patient) {
-    var practitioner = $scope.getPersonByID(helperService.data.practitioners, $scope.new_appointment_practitioner);
-    
+    var practitioner = helperService.getPractitionerNameByID($scope.new_appointment_practitioner);
+    console.log($scope.new_appointment_practitioner);
     if (!angular.isUndefined(practitioner)) {
       $http.post("http://localhost:3001/appointment/new", {
         id: $scope.getNewAppointmentID()
@@ -218,10 +220,6 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
         helperService.triggerError("There was an error adding new appointment. The endpoint doesn't exist.");
       });
     }
-  };
-
-  $scope.selectChange = function() {
-    console.log($scope.new_appointment_practitioner);
   };
 
   // We need these two functions in the view, so we copy them from the service
@@ -269,7 +267,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
   // in a given source array
   $scope.onSearch = function(source) {
     $scope.genericSearch(function() {
-      return searchFilter(source, $scope.search.term);
+      return personFilter(source, $scope.search.term);
     });
   };
 
