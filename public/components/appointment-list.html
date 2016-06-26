@@ -1,0 +1,10 @@
+<section>
+  <h3>List of appointments</h3>
+  <p ng-if="$ctrl.person.appointments.length === 0"><span ng-bind="$ctrl.getFullName($ctrl.person)"></span> has no appointments</p>
+  <ul ng-if="$ctrl.person.appointments.length > 0">
+    <li ng-repeat="appointment in $ctrl.person.appointments">
+      <span ng-bind="$ctrl.displayDate(appointment.date)"></span> with 
+      <span ng-bind="$ctrl.getFullNameByID(appointment)"></span>
+    </li>
+  </ul>
+</section>

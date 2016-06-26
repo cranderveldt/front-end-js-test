@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en" ng-app="cliniko-test">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Cliniko Front-End JS Test</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.css" media="screen">
+  <link rel="stylesheet" href="/styles.css" media="screen">
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
+  <script src="/lib/moment.js"></script>
+  <script src="/lib/underscore.js"></script>
+  <script src="/js/controller.js"></script>
+  <script src="/js/components.js"></script>
+</head>
+<body ng-controller="Main">
+
+  <p class="error flex-spaced" ng-if="error.exists" ng-click="error.exists = false"><span ng-bind="error.message"></span><span>X</span></p>
+  
+  <nav>
+    <h1 class=visually-hidden>Main navigation</h1>
+    <div class="flex">
+      <button class=button ng-click="changeView(view)" ng-repeat="view in views" ng-bind="view">Patients</button>
+    </div>
+  </nav>
+
+  <article role=main>
+    <h1 ng-bind="current_view"></h1>
+
+    <div ng-if="current_view === 'Patients'">
+      <label for=search>Search for a patient by name</label>
+      <ck-search name="patient" search="search" on-keyup="onPatientSearch()" on-result-click="selectPatient"></ck-search>
+     
+      <section ng-if="selected_item !== null">
+        <h2 ng-bind="getFullName(selected_item)"></h2>
+
+        <section>
+          <h3>Create a new appointment</h3>
+          <label for=practitioner>Choose a practitioner</label>
+          <select id=practitioner required ng-options="option.id as (getFullName(option)) for option in data.practitioners" ng-model="new_appointment_practitioner" ng-change="selectChange()">
+          </select>
+          <p class=info>The appointment date will be set to <span ng-bind="displayDate(current_date)"></span></p>
+          <button class=button ng-click="addAppointment(selected_item)" ng-disabled="new_appointment_practitioner === ''">Create Appointment</button>
+        </section>
+        
+        <ck-appointment-listing person="selected_item" relation-with="practitioner"></ck-appointment-listing>
+
+      </section>
+    </div>
+
+    <div ng-if="current_view === 'Practitioners'">
+      <label for=search>Search for a practitioner by name</label>
+      <ck-search name="practitioner" search="search" on-keyup="onPractitionerSearch()" on-result-click="selectPractitioner"></ck-search>
+
+      <section ng-if="selected_item !== null">
+        <h2 ng-bind="getFullName(selected_item)"></h2>
+        <ck-appointment-listing person="selected_item" relation-with="patient"></ck-appointment-listing>
+      </section>
+    </div>
+
+    <div ng-if="current_view === 'Appointments'">
+      <label for=search>Search for an appointment by practitioner or patient name</label>
+      <ck-search name="appointment" search="search" on-keyup="onAppointmentSearch()" on-result-click="angular.noop"></ck-search>
+    </div>
+  </article>
+</body>
+</html>

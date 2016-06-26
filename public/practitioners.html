@@ -1,0 +1,39 @@
+<!DOCTYPE html><html lang="en"><head><title>Patients, Practitioners, and Appointments</title><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.css" media="screen"><link rel="stylesheet" href="/styles.css" media="screen"></head><body><h1 class=visually-hidden>Patients, Practitioners, and Appointments</h1>
+
+<nav>
+  <h1 class=visually-hidden>Main navigation</h1>
+  <div class="flex">
+    <button class=button>Patients</button>
+    <button class=button>Practitioners</button>
+    <button class=button>Appointments</button>
+  </div>
+</nav>
+
+<article role=main>
+  <h1>Practitioners</h1>
+
+  <label for=search>Search for a practitioner by name</label>
+  <input id=search type=search autofocus aria-controls=search-results/>
+  <p class=info>Searching...</p>
+  <p class=notice>There are no results for that search</p>
+  <ul id=search-results>
+    <li><button class=link>{Practitioner name}</button></li>
+    <li><button class=link>{Practitioner name}</button></li>
+  </ul>
+
+  <section>
+    <h2>{Practitioner name}</h2>
+
+    <section>
+      <h3>List of appointments</h3>
+      <p>{Practitioner name} has no appointments</p>
+      <ul>
+        <li>{Appointment date} with {Patient name}</li>
+        <li>{Appointment date} with {Patient name}</li>
+      </ul>
+    </section>
+
+  </section>
+</article>
+
+</body></html>
