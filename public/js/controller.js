@@ -205,14 +205,13 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
 
   // This is the theoretical POST function for adding a new appointment but since
   // there's no endpoint set up for adding a new apointment this is just an approximation
-  $scope.addAppointment = function(patient) {
-    var practitioner = helperService.getPractitionerNameByID($scope.new_appointment_practitioner);
-    console.log($scope.new_appointment_practitioner);
+  $scope.addAppointment = function(patient, practitioner_id) {
+    var practitioner = helperService.getPractitionerNameByID(practitioner_id);
     if (!angular.isUndefined(practitioner)) {
       $http.post("http://localhost:3001/appointment/new", {
         id: $scope.getNewAppointmentID()
         , date: moment($scope.current_date).format()
-        , practitioner_id: practitioner.id
+        , practitioner_id: practitioner_id
         , patient_id: patient.id
       }).then(function(response) {
         console.log(response);
