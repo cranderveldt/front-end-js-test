@@ -291,12 +291,16 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
   // Selects a patient for the detail view section
   $scope.selectPatient = function(patient) {
     $scope.selected_item = patient;
+    $scope.search.term = "";
+    $scope.search.results = [];
     $scope.selected_item.appointments = _.where(helperService.data.appointments, { patient_id: patient.id });
   };
 
   // Selects a practitioner for the detail view section
   $scope.selectPractitioner = function(practitioner) {
     $scope.selected_item = practitioner;
+    $scope.search.term = "";
+    $scope.search.results = [];
     $scope.selected_item.appointments = _.where(helperService.data.appointments, { practitioner_id: practitioner.id });
   };
 
