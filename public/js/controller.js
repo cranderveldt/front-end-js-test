@@ -139,18 +139,12 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
 
   // Ideally the query here would be relational, i.e. find all appointments WHERE
   // patient names = search term OR practitioner names = search term
-  // But I couldn't get anything close to this query to work. Maybe I'm missing some
-  // syntax? I tried using ?_expand and ?_embed but neither yielded any results
+  // But you can't query on relational data as far as I can tell from the API
   //
-  // So instead we have this monster of several queries
-  // patients where names = search term + practitioners where name = search term
-  // then plucking their respective IDs and search appointments twice for each list
-  // then we combine the two arrays, getting rid of any duplicates
+  // So instead we query patients where names = search term + practitioners
+  // where name = search term and include appointment data in the request
+  // then we combine the two appointment arrays, getting rid of any duplicates
   // finally we grab the all the relational data from each appointment
-  //
-  // This is super nasty and while it works with not too much delay for the user
-  // I would want to refactor this with a better grasp on the API before this code 
-  // went out into production
   $scope.onAppointmentSearch = function() {
     $scope.genericSearch(function() {
       var practitioner_ids = [];
@@ -159,30 +153,28 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
       // Set up a promise concurrently with practitioners query
       // Don't reject anything, just resolve an empty array
       var patient_promise = $q(function(resolve, reject) {
-        $scope.loadCollection('patients', { q: $scope.search.term }, function(patients_data) {
+        $scope.loadCollection('patients', { _embed: "appointments", q: $scope.search.term }, function(patients_data) {
+          var appointments = [];
           if (patients_data.length > 0) {
-            patient_ids = patients_data.map(function(p) { return p.id; });
-            $scope.loadCollection('appointments', { patientId: patient_ids, _sort: "date" }, function(patient_appointments) {
-              resolve(patient_appointments);
-            });
-          } else {
-            resolve([])
-          }
+            for (var p in patients_data) {
+              appointments = appointments.concat(patients_data[p].appointments);
+            }
+          } 
+          resolve(appointments);
         });
       });
 
       // Set up a promise concurrently with patients query
       // Don't reject anything, just resolve an empty array
       var practitioner_promise = $q(function(resolve, reject) {
-        $scope.loadCollection('practitioners', { q: $scope.search.term }, function(practitioners_data) {
+        $scope.loadCollection('practitioners', { _embed: "appointments", q: $scope.search.term }, function(practitioners_data) {
+          var appointments = [];
           if (practitioners_data.length > 0) {
-            practitioner_ids = practitioners_data.map(function(p) { return p.id; });
-            $scope.loadCollection('appointments', { practitionerId: practitioner_ids, _sort: "date" }, function(practitioner_appointments) {
-              resolve(practitioner_appointments);
-            });
-          } else {
-            resolve([])
-          }
+            for (var p in practitioners_data) {
+              appointments = appointments.concat(practitioners_data[p].appointments);
+            }
+          } 
+          resolve(appointments);
         });
       });
 
@@ -191,7 +183,6 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
       patient_promise.then(function(patient_appointments) {
         practitioner_promise.then(function(practitioner_appointments) {
           $scope.search.results = _.union(patient_appointments, practitioner_appointments);
-
           if ($scope.search.results.length > 0) {
             $scope.loadRelationalAppointmentData($scope.search.results, "patients", "patientId");
             $scope.loadRelationalAppointmentData($scope.search.results, "practitioners", "practitionerId");
