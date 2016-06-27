@@ -30,8 +30,8 @@ CLINIKO_APP.factory('helperService', ['$http', '$q', function($http, $q) {
 }]);
 
 // Single "Main" controller
-CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "appointmentFilter", 
-  function ($scope, $http, $timeout, appointmentFilter) {
+CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
+  function ($scope, $http, $timeout, helperService) {
 
   $scope.error = {
     exists: false
