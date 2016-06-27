@@ -53,8 +53,11 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
   $scope.current_date = moment().format();
   $scope.new_appointment_practitioner = 1;
 
-  // This is the theoretical POST function for adding a new appointment but since
-  // there's no endpoint set up for adding a new apointment this is just an approximation
+  // This takes the currently selected patient and the practitioner_id from the select element
+  // We start by looking up the practitioner's full name and check to make sure it's defined
+  // This is a good check to make sure our data is good before we try to post and we'll use
+  // the name later. Then we post and get the response back to add into the currently selected
+  // patient's appointments list. Finally we trigger a success notice at the top of the screen
   $scope.addAppointment = function(patient, practitioner_id) {
     $scope.getFullNameByID("practitioners", practitioner_id, function(name) {
       if (!angular.isUndefined(name)) {
@@ -73,6 +76,8 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
     });
   };
 
+  // This loads up patient_name or practitioner_name for each appointment passed
+  // Data is saved on each appointment itself so nothing is returned
   $scope.loadRelationalAppointmentData = function(appointments, path, key) {
     var query = {id: []};
     query.id = appointments.map(function(appointment) {
@@ -103,6 +108,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
   // If the term is over 2 chars and it's been 500ms since the last search,
   // you can search again. At the end of 500s if the term has changed (i.e. someone
   // was typing during the timeout), perform another search to update the results
+  // it also takes a function which is the specifics of each type of search
   $scope.genericSearch = function(closure) {
     if ($scope.search.term.length > 2 && !$scope.search.timeout) {
       
@@ -121,6 +127,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
     }
   };
 
+  // Searching for a person uses the 'q' query property
   $scope.onPersonSearch = function(path) {
     $scope.genericSearch(function() {
       $scope.loadCollection(path, { q: $scope.search.term }, function(data) {
@@ -130,12 +137,20 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
     });
   };
 
-  // query: appointments where patient or practitioner names = search term
-  // I tried using relational queries provided by the API but they didn't seem to work
-  // So instead we have to do several queries
-  // patients where names = search term + practitioners wher name = search term
+  // Ideally the query here would be relational, i.e. find all appointments WHERE
+  // patient names = search term OR practitioner names = search term
+  // But I couldn't get anything close to this query to work. Maybe I'm missing some
+  // syntax? I tried using ?_expand and ?_embed but neither yielded any results
+  //
+  // So instead we have this monster of several queries
+  // patients where names = search term + practitioners where name = search term
   // then plucking their respective IDs and search appointments twice for each list
   // then we combine the two arrays, getting rid of any duplicates
+  // finally we grab the all the relational data from each appointment
+  //
+  // This is super nasty and while it works with not too much delay for the user
+  // I would want to refactor this with a better grasp on theAPI before this code 
+  // went out into production
   $scope.onAppointmentSearch = function() {
     $scope.genericSearch(function() {
       var practitioner_ids = [];
@@ -193,7 +208,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
 
   // Generic get object by ID. Takes an array and an ID to look it up
   // If nothing is found, undefined is returned
-  $scope.getPersonByID = function(path, id) {
+  $scope.getObjectbyID = function(path, id) {
     return $q(function(resolve, reject) {
       $http.get("http://localhost:3001/" + path + "/" + id).then(function(response) {
         resolve(response.data);
@@ -206,12 +221,15 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
 
   // Shorthand helper method for returning a fullname by an array and id
   $scope.getFullNameByID = function(path, id, closure) {
-    $scope.getPersonByID(path, id).then(function(person) {
+    $scope.getObjectbyID(path, id).then(function(person) {
       closure($scope.getFullName(person));
     }, closure);
   };
 
-
+  // Builds a query string given an object
+  // Object property values can be strings, ints or arrays
+  // If it's an array it will iterate over the values and compile multiple
+  // values for the same property, e.g. "id=4&id=5&id=6"
   $scope.buildQueryURL = function(path, query) {
     var url = "http://localhost:3001/" + path;
 
@@ -231,9 +249,8 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
     return url;
   };
 
-  // Loads patients from API
+  // Loads data from the API based on path and query
   $scope.loadCollection = function(path, query, closure) {
-    closure = closure || angular.noop;
     var url = $scope.buildQueryURL(path, query);
     
     $http.get(url).then(function(response) {
@@ -243,12 +260,11 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
     });
   };
 
-  // Triggers error in console and for user
+  // Triggers notice for user in banner at the top of the page
   $scope.triggerNotice = function(type, message) {
     $scope.notice.type = type;
     $scope.notice.exists = true;
     $scope.notice.message = message;
-    console.log(message);
   };
 
 }]);
