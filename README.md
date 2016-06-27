@@ -1,3 +1,9 @@
+# Trevor's notes
+
+This was a really fun test, I enjoyed putting it together. I didn't realize how robust the API was at first, and part of my confusion was because of the column naming convention used in the api.js file. Appointments have `patient_id` and `practitioner_id` but if the column names are changed to `patientId` and `practitionerId`, then you can do relational queries, which help out in a couple of places.
+
+Because of this I've changed the column names in api.js here on master, but I've kept my original solution using your given column names on the [no_relation_queries branch](https://github.com/cranderveldt/front-end-js-test/tree/no_relation_queries). The code on this branch uses two additional queries on appointment search, but if you wanted us to avoid relational queries, that's the branch to review. Otherwise you can stick to master.
+
 # Front end test
 You will build a small single page app that consumes a REST API for managing appointments.
 
