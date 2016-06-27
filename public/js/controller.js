@@ -104,6 +104,23 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
     $scope.selected_item = null;
   };
 
+  // Originally I was only using q, but that would fail if you typed in a person's
+  // full name, so now if you have a space in your term, we search the first word
+  // against first name and the second word against the last name  
+  $scope.generateSearchQuery = function(term, query) {
+    var terms = term.split(" ");
+    query = query || {};
+
+    if (terms.length > 1) {
+      query.first_name_like = terms[0];
+      query.last_name_like = terms[1];
+    } else {
+      query.q = term;
+    }
+
+    return query;
+  };
+
   // The shared guts of the search logic
   // If the term is over 2 chars and it's been 500ms since the last search,
   // you can search again. At the end of 500s if the term has changed (i.e. someone
@@ -130,7 +147,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
   // Searching for a person uses the 'q' query property
   $scope.onPersonSearch = function(path) {
     $scope.genericSearch(function() {
-      $scope.loadCollection(path, { q: $scope.search.term }, function(data) {
+      $scope.loadCollection(path, $scope.generateSearchQuery($scope.search.term), function(data) {
         $scope.search.results = data;
         $scope.search.searching = false;
       });
@@ -153,7 +170,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
       // Set up a promise concurrently with practitioners query
       // Don't reject anything, just resolve an empty array
       var patient_promise = $q(function(resolve, reject) {
-        $scope.loadCollection('patients', { _embed: "appointments", q: $scope.search.term }, function(patients_data) {
+        $scope.loadCollection('patients', $scope.generateSearchQuery($scope.search.term, { _embed: "appointments" }), function(patients_data) {
           var appointments = [];
           if (patients_data.length > 0) {
             for (var p in patients_data) {
@@ -167,7 +184,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
       // Set up a promise concurrently with patients query
       // Don't reject anything, just resolve an empty array
       var practitioner_promise = $q(function(resolve, reject) {
-        $scope.loadCollection('practitioners', { _embed: "appointments", q: $scope.search.term }, function(practitioners_data) {
+        $scope.loadCollection('practitioners', $scope.generateSearchQuery($scope.search.term, { _embed: "appointments" }), function(practitioners_data) {
           var appointments = [];
           if (practitioners_data.length > 0) {
             for (var p in practitioners_data) {
