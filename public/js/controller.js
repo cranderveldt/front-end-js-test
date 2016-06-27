@@ -14,7 +14,7 @@ CLINIKO_APP.factory('helperService', function() {
       if (person.title) {
         name = name + person.title + " ";
       }
-      name = name + person.first_name + " " + person.last_name
+      name = name + person.first_name + " " + person.last_name;
     }
     return name;
   };
@@ -149,7 +149,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
   // finally we grab the all the relational data from each appointment
   //
   // This is super nasty and while it works with not too much delay for the user
-  // I would want to refactor this with a better grasp on theAPI before this code 
+  // I would want to refactor this with a better grasp on the API before this code 
   // went out into production
   $scope.onAppointmentSearch = function() {
     $scope.genericSearch(function() {
@@ -157,6 +157,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
       var patient_ids = [];
 
       // Set up a promise concurrently with practitioners query
+      // Don't reject anything, just resolve an empty array
       var patient_promise = $q(function(resolve, reject) {
         $scope.loadCollection('patients', { q: $scope.search.term }, function(patients_data) {
           if (patients_data.length > 0) {
@@ -165,12 +166,13 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
               resolve(patient_appointments);
             });
           } else {
-            reject([])
+            resolve([])
           }
         });
       });
 
       // Set up a promise concurrently with patients query
+      // Don't reject anything, just resolve an empty array
       var practitioner_promise = $q(function(resolve, reject) {
         $scope.loadCollection('practitioners', { q: $scope.search.term }, function(practitioners_data) {
           if (practitioners_data.length > 0) {
@@ -179,30 +181,24 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
               resolve(practitioner_appointments);
             });
           } else {
-            reject([])
+            resolve([])
           }
         });
       });
 
-      // A promise to resolve the two promises
-      // Start by resolving patients, then resolve practitioners and combine the arrays
-      $q(function(resolve, reject) {
-        var combineData = function(patient_appointments) {
-          practitioner_promise.then(function(practitioner_appointments) {
-            resolve(_.union(patient_appointments, practitioner_appointments));
-          }, function(practitioner_appointments) {
-            resolve(_.union(patient_appointments, practitioner_appointments));
-          });
-        }
-        patient_promise.then(combineData, combineData);
-      }).then(function(results) {
-        $scope.search.searching = false;
-        $scope.search.results = results;
+      // Combine the data from the two promises
+      // Don't have to worry about handling fail states, will always resolve
+      patient_promise.then(function(patient_appointments) {
+        practitioner_promise.then(function(practitioner_appointments) {
+          $scope.search.results = _.union(patient_appointments, practitioner_appointments);
 
-        if ($scope.search.results.length > 0) {
-          $scope.loadRelationalAppointmentData($scope.search.results, "patients", "patient_id");
-          $scope.loadRelationalAppointmentData($scope.search.results, "practitioners", "practitioner_id");
-        }
+          if ($scope.search.results.length > 0) {
+            $scope.loadRelationalAppointmentData($scope.search.results, "patients", "patient_id");
+            $scope.loadRelationalAppointmentData($scope.search.results, "practitioners", "practitioner_id");
+          }
+
+          $scope.search.searching = false;
+        });
       });
     });
   };
@@ -275,7 +271,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
           url = url + q + "=" + query[q][a] + "&";
         }
       }
-      url = url.slice(0, -1)
+      url = url.slice(0, -1);
     }
 
     return url;
