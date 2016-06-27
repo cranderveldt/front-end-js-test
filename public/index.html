@@ -17,17 +17,17 @@
   <p class="error flex-spaced" ng-if="error.exists" ng-click="error.exists = false"><span ng-bind="error.message"></span><span>X</span></p>
   
   <nav>
-    <h1 class=visually-hidden>Main navigation</h1>
+    <h1 class="visually-hidden">Main navigation</h1>
     <div class="flex">
-      <button class=button ng-click="changeView(view)" ng-repeat="view in views" ng-bind="view">Patients</button>
+      <button class="button" ng-click="changeView(view)" ng-repeat="view in views" ng-bind="view">Patients</button>
     </div>
   </nav>
 
-  <article role=main>
+  <article role="main">
     <h1 ng-bind="current_view"></h1>
 
     <div ng-if="current_view === 'Patients'">
-      <label for=search>Search for a patient by name</label>
+      <label for="search">Search for a patient by name</label>
       <ck-search name="patient" search="search" on-keyup="onPatientSearch()" on-result-click="selectPatient"></ck-search>
      
       <section ng-if="selected_item !== null">
@@ -35,11 +35,11 @@
 
         <section>
           <h3>Create a new appointment</h3>
-          <label for=practitioner>Choose a practitioner</label>
+          <label for="practitioner">Choose a practitioner</label>
           <select required ng-model="new_appointment_practitioner" ng-options="option.id as (getFullName(option)) for option in data.practitioners">
           </select>
-          <p class=info>The appointment date will be set to <span ng-bind="displayDate(current_date)"></span></p>
-          <button class=button ng-click="addAppointment(selected_item, new_appointment_practitioner)" ng-disabled="new_appointment_practitioner === ''">Create Appointment</button>
+          <p class="info">The appointment date will be set to <span ng-bind="displayDate(current_date)"></span></p>
+          <button class="button" ng-click="addAppointment(selected_item, new_appointment_practitioner)" ng-disabled="new_appointment_practitioner === ''">Create Appointment</button>
         </section>
         
         <ck-appointment-listing person="selected_item" relation-with="practitioner"></ck-appointment-listing>
@@ -48,7 +48,7 @@
     </div>
 
     <div ng-if="current_view === 'Practitioners'">
-      <label for=search>Search for a practitioner by name</label>
+      <label for="search">Search for a practitioner by name</label>
       <ck-search name="practitioner" search="search" on-keyup="onPractitionerSearch()" on-result-click="selectPractitioner"></ck-search>
 
       <section ng-if="selected_item !== null">
@@ -58,7 +58,7 @@
     </div>
 
     <div ng-if="current_view === 'Appointments'">
-      <label for=search>Search for an appointment by practitioner or patient name</label>
+      <label for="search">Search for an appointment by practitioner or patient name</label>
       <ck-search name="appointment" search="search" on-keyup="onAppointmentSearch()" on-result-click="angular.noop"></ck-search>
     </div>
   </article>

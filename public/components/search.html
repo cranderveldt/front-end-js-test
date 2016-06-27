@@ -1,7 +1,7 @@
-<input id=search type=search autofocus aria-controls=search-results ng-keyup="$ctrl.onKeyup()" ng-model="$ctrl.search.term" />
-<p class=info ng-if="$ctrl.search.searching">Searching...</p>
-<p class=notice ng-if="$ctrl.search.results.length === 0 && $ctrl.search.term.length > 2">There are no results for that search</p>
-<ul id=search-results ng-if="$ctrl.search.results.length > 0">
+<input id="search" type="search" autofocus aria-controls="search-results" ng-keyup="$ctrl.onKeyup()" ng-model="$ctrl.search.term" />
+<p class="info" ng-if="$ctrl.search.searching">Searching...</p>
+<p class="notice" ng-if="$ctrl.search.results.length === 0 && $ctrl.search.term.length > 2">There are no results for that search</p>
+<ul id="search-results" ng-if="$ctrl.search.results.length > 0">
   <li ng-repeat="result in $ctrl.search.results">
     <ck-search-result
     name="$ctrl.name"
