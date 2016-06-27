@@ -53,18 +53,18 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
   $scope.current_date = moment().format();
   $scope.new_appointment_practitioner = 1;
 
-  // This takes the currently selected patient and the practitioner_id from the select element
+  // This takes the currently selected patient and the practitionerId from the select element
   // We start by looking up the practitioner's full name and check to make sure it's defined
   // This is a good check to make sure our data is good before we try to post and we'll use
   // the name later. Then we post and get the response back to add into the currently selected
   // patient's appointments list. Finally we trigger a success notice at the top of the screen
-  $scope.addAppointment = function(patient, practitioner_id) {
-    $scope.getFullNameByID("practitioners", practitioner_id, function(name) {
+  $scope.addAppointment = function(patient, practitionerId) {
+    $scope.getFullNameByID("practitioners", practitionerId, function(name) {
       if (!angular.isUndefined(name)) {
         $http.post("http://localhost:3001/appointments/", {
           date: moment($scope.current_date).format()
-          , practitioner_id: practitioner_id
-          , patient_id: patient.id
+          , practitionerId: practitionerId
+          , patientId: patient.id
         }).then(function(response) {
           response.data.practitioner_name = name;
           $scope.selected_item.appointments.push(response.data);
@@ -162,7 +162,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
         $scope.loadCollection('patients', { q: $scope.search.term }, function(patients_data) {
           if (patients_data.length > 0) {
             patient_ids = patients_data.map(function(p) { return p.id; });
-            $scope.loadCollection('appointments', { patient_id: patient_ids, _sort: "date" }, function(patient_appointments) {
+            $scope.loadCollection('appointments', { patientId: patient_ids, _sort: "date" }, function(patient_appointments) {
               resolve(patient_appointments);
             });
           } else {
@@ -177,7 +177,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
         $scope.loadCollection('practitioners', { q: $scope.search.term }, function(practitioners_data) {
           if (practitioners_data.length > 0) {
             practitioner_ids = practitioners_data.map(function(p) { return p.id; });
-            $scope.loadCollection('appointments', { practitioner_id: practitioner_ids, _sort: "date" }, function(practitioner_appointments) {
+            $scope.loadCollection('appointments', { practitionerId: practitioner_ids, _sort: "date" }, function(practitioner_appointments) {
               resolve(practitioner_appointments);
             });
           } else {
@@ -193,8 +193,8 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
           $scope.search.results = _.union(patient_appointments, practitioner_appointments);
 
           if ($scope.search.results.length > 0) {
-            $scope.loadRelationalAppointmentData($scope.search.results, "patients", "patient_id");
-            $scope.loadRelationalAppointmentData($scope.search.results, "practitioners", "practitioner_id");
+            $scope.loadRelationalAppointmentData($scope.search.results, "patients", "patientId");
+            $scope.loadRelationalAppointmentData($scope.search.results, "practitioners", "practitionerId");
           }
 
           $scope.search.searching = false;
@@ -214,14 +214,14 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
     $scope.loadCollection("appointments", query, function(appointments) {
       $scope.selected_item.appointments = appointments;
       if (appointments.length > 0) {
-        $scope.loadRelationalAppointmentData($scope.selected_item.appointments, relation_key + "s", relation_key + "_id");
+        $scope.loadRelationalAppointmentData($scope.selected_item.appointments, relation_key + "s", relation_key + "Id");
       }
     });
   };
 
   // Helper method for more modular view
   $scope.selectPatient = function(person) {
-    $scope.selectPerson(person, { patient_id: person.id, _sort: "date" }, "practitioner");
+    $scope.selectPerson(person, { patientId: person.id, _sort: "date" }, "practitioner");
 
     // Need a list of all practictioners for the add new appointment select element
     $scope.loadCollection('practitioners', undefined, function(data) {
@@ -231,7 +231,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
 
   // Helper method for more modular view
   $scope.selectPractitioner = function(person) {
-    $scope.selectPerson(person, { practitioner_id: person.id, _sort: "date" }, "patient");
+    $scope.selectPerson(person, { practitionerId: person.id, _sort: "date" }, "patient");
   };
 
   // Generic get object by ID. Takes an array and an ID to look it up
