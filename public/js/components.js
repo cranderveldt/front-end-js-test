@@ -31,11 +31,6 @@ CLINIKO_APP.component('ckSearchResult', {
     $ctrl.getResultTemplateURL = function() {
       return $ctrl.name === "appointment" ? "/components/appointment-result.html" : "/components/person-result.html";
     };
-
-    if ($ctrl.name === "appointment") {
-      $ctrl.patient = _.findWhere(helperService.data.patients, { id: $ctrl.result.patient_id });
-      $ctrl.practitioner = _.findWhere(helperService.data.practitioners, { id: $ctrl.result.practitioner_id });
-    }
   }
   , template: '<div ng-include="$ctrl.getResultTemplateURL()"></div>'
 });
@@ -43,6 +38,7 @@ CLINIKO_APP.component('ckSearchResult', {
 CLINIKO_APP.component('ckAppointmentListing', {
   bindings: {
     person: '='
+    , relationalKey: '@'
   }
   , controller: function($scope, $element, $attrs, helperService) {
     var $ctrl = this;

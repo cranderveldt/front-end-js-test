@@ -28,7 +28,7 @@
 
     <div ng-if="current_view === 'Patients'">
       <label for="search">Search for a patient by name</label>
-      <ck-search name="patient" search="search" on-keyup="onPatientSearch()" on-result-click="selectPatient"></ck-search>
+      <ck-search name="patient" search="search" on-keyup="onPersonSearch('patients')" on-result-click="selectPatient"></ck-search>
      
       <section ng-if="selected_item !== null">
         <h2 ng-bind="getFullName(selected_item)"></h2>
@@ -36,24 +36,24 @@
         <section>
           <h3>Create a new appointment</h3>
           <label for="practitioner">Choose a practitioner</label>
-          <select required ng-model="new_appointment_practitioner" ng-options="option.id as (getFullName(option)) for option in data.practitioners">
+          <select required ng-model="new_appointment_practitioner" ng-options="option.id as (getFullName(option)) for option in practitioners">
           </select>
           <p class="info">The appointment date will be set to <span ng-bind="displayDate(current_date)"></span></p>
           <button class="button" ng-click="addAppointment(selected_item, new_appointment_practitioner)" ng-disabled="new_appointment_practitioner === ''">Create Appointment</button>
         </section>
         
-        <ck-appointment-listing person="selected_item"></ck-appointment-listing>
+        <ck-appointment-listing person="selected_item" relational-key="practitioner_name"></ck-appointment-listing>
 
       </section>
     </div>
 
     <div ng-if="current_view === 'Practitioners'">
       <label for="search">Search for a practitioner by name</label>
-      <ck-search name="practitioner" search="search" on-keyup="onPractitionerSearch()" on-result-click="selectPractitioner"></ck-search>
+      <ck-search name="practitioner" search="search" on-keyup="onPersonSearch('practitioners')" on-result-click="selectPractitioner"></ck-search>
 
       <section ng-if="selected_item !== null">
         <h2 ng-bind="getFullName(selected_item)"></h2>
-        <ck-appointment-listing person="selected_item"></ck-appointment-listing>
+        <ck-appointment-listing person="selected_item" relational-key="patient_name"></ck-appointment-listing>
       </section>
     </div>
 
