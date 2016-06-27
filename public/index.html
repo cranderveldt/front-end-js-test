@@ -42,7 +42,7 @@
           <button class="button" ng-click="addAppointment(selected_item, new_appointment_practitioner)" ng-disabled="new_appointment_practitioner === ''">Create Appointment</button>
         </section>
         
-        <ck-appointment-listing person="selected_item" relation-with="practitioner"></ck-appointment-listing>
+        <ck-appointment-listing person="selected_item"></ck-appointment-listing>
 
       </section>
     </div>
@@ -53,7 +53,7 @@
 
       <section ng-if="selected_item !== null">
         <h2 ng-bind="getFullName(selected_item)"></h2>
-        <ck-appointment-listing person="selected_item" relation-with="patient"></ck-appointment-listing>
+        <ck-appointment-listing person="selected_item"></ck-appointment-listing>
       </section>
     </div>
 

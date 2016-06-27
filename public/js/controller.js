@@ -34,6 +34,8 @@
 *                                                                   -Trevor Moore
 */
 
+// TODO: make sure we're sorting correctly
+
 
 // Define the app
 var CLINIKO_APP = angular.module("cliniko-test", []);
@@ -95,32 +97,29 @@ CLINIKO_APP.factory('helperService', ['$http', '$q', function($http, $q) {
     return moment(date).format("MMMM Do YYYY");
   };
 
+  // This adds an extra & at the end of the string but it doesn't affect the data
+  service.buildQueryURL = function(path, query) {
+    var url = "http://localhost:3001/" + path;
+
+    if (!angular.isUndefined(query)) {
+      url = url + "?";
+      for (var q in query) {
+        url = url + q + "=" + query[q] + "&";
+      }
+    }
+    return url;
+  };
+
   // Loads patients from API
-  service.loadPatientData = function() {
-    $http.get("http://localhost:3001/patients").then(function(response) {
-      service.data.patients = response.data;
-      service.loadPractitionersData();
+  service.loadCollection = function(path, query, closure) {
+    closure = closure || angular.noop;
+    var url = service.buildQueryURL(path, query);
+    
+    $http.get(url).then(function(response) {
+      service.data[path] = response.data;
+      closure(response.data);
     }, function(data) {
       service.triggerError("There was an error getting patient data.");
-    });
-  };
-
-  // Loads practitioners from API
-  service.loadPractitionersData = function() {
-    $http.get("http://localhost:3001/practitioners").then(function(response) {
-      service.data.practitioners = response.data;
-      service.loadAppointmentsData();
-    }, function(data) {
-      service.triggerError("There was an error getting practitioners data.");
-    });
-  };
-
-  // Loads appointments from API
-  service.loadAppointmentsData = function() {
-    $http.get("http://localhost:3001/appointments").then(function(response) {
-      service.data.appointments = response.data;
-    }, function(data) {
-      service.triggerError("There was an error getting appointments data.");
     });
   };
 
@@ -205,13 +204,15 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
   $scope.addAppointment = function(patient, practitioner_id) {
     helperService.getFullNameByID("practitioners", practitioner_id, function(name) {
       if (!angular.isUndefined(name)) {
-        $http.post("http://localhost:3001/appointment/new", {
+        $http.post("http://localhost:3001/appointments/", {
           id: $scope.getNewAppointmentID()
           , date: moment($scope.current_date).format()
           , practitioner_id: practitioner_id
           , patient_id: patient.id
         }).then(function(response) {
-          console.log(response);
+          helperService.data.appointments.push(response.data);
+          response.data.full_name = name;
+          $scope.selected_item.appointments.push(response.data);
         }, function(data) {
           helperService.triggerError("There was an error adding new appointment. The endpoint doesn't exist.");
         });
@@ -243,6 +244,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
     $scope.search.results = [];
     $scope.current_view = name;
     $scope.selected_item = null;
+    helperService.loadCollection(name.toLowerCase());
   };
 
   // Generates new appointment ID based on the last appointment ID
@@ -275,7 +277,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
 
   // Regular search which compares search terms to each object's properties 
   // in a given source array
-  $scope.onSearch = function(source) {
+  $scope.onPersonSearch = function(source) {
     $scope.genericSearch(function() {
       return personFilter(source, $scope.search.term);
     });
@@ -291,34 +293,37 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
 
   // Helper function for more modular markup
   $scope.onPatientSearch = function() {
-    $scope.onSearch(helperService.data.patients);
+    $scope.onPersonSearch(helperService.data.patients);
   };
 
   // Helper function for more modular markup
   $scope.onPractitionerSearch = function() {
-    $scope.onSearch(helperService.data.patients);
+    $scope.onPersonSearch(helperService.data.practitioners);
   };
 
-  // Selects a patient for the detail view section
-  $scope.selectPatient = function(patient) {
-    $scope.selected_item = patient;
+  // Selects a person for the detail view section
+  $scope.selectPerson = function(person, query, relation_key) {
+    $scope.selected_item = person;
     $scope.search.term = "";
     $scope.search.results = [];
     
     // Grab all appointments, all practitioners for each appointment
-    $scope.selected_item.appointments = _.where(helperService.data.appointments, { patient_id: patient.id });
-    $scope.loadRelationalAppointmentData($scope.selected_item.appointments, "practitioners", "practitioner_id")
+    helperService.loadCollection("appointments", query, function(appointments) {
+      $scope.selected_item.appointments = appointments;
+      if (appointments.length > 0) {
+        $scope.loadRelationalAppointmentData($scope.selected_item.appointments, relation_key + "s", relation_key + "_id")
+      }
+    });
   };
 
-  // Selects a practitioner for the detail view section
-  $scope.selectPractitioner = function(practitioner) {
-    $scope.selected_item = practitioner;
-    $scope.search.term = "";
-    $scope.search.results = [];
-    
-    // Grab all appointments, all patients for each appointment
-    $scope.selected_item.appointments = _.where(helperService.data.appointments, { practitioner_id: practitioner.id });
-    $scope.loadRelationalAppointmentData($scope.selected_item.appointments, "patients", "patient_id")
+  // Helper method for more modular view
+  $scope.selectPatient = function(person) {
+    $scope.selectPerson(person, { patient_id: person.id }, "practitioner");
+  };
+
+  // Helper method for more modular view
+  $scope.selectPractitioner = function(person) {
+    $scope.selectPerson(person, { practitioner_id: person.id }, "patient");
   };
 
   // Grab all the data on page load
@@ -326,7 +331,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
   // But in that case you'd probably use a backend for running the search
   // And call the backend search endpoint from the frontend
   $scope.onPageLoad = function() {
-    helperService.loadPatientData();
+    helperService.loadCollection($scope.current_view.toLowerCase());
   };
 
   $scope.onPageLoad();

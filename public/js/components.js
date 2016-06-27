@@ -43,7 +43,6 @@ CLINIKO_APP.component('ckSearchResult', {
 CLINIKO_APP.component('ckAppointmentListing', {
   bindings: {
     person: '='
-    , relationWith: '@'
   }
   , controller: function($scope, $element, $attrs, helperService) {
     var $ctrl = this;
