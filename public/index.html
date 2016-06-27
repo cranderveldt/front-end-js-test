@@ -14,7 +14,7 @@
 </head>
 <body ng-controller="Main">
 
-  <p class="error flex-spaced" ng-if="error.exists" ng-click="error.exists = false"><span ng-bind="error.message"></span><span>X</span></p>
+  <p class="notice flex-spaced" ng-class="notice.type" ng-if="notice.exists" ng-click="notice.exists = false"><span ng-bind="notice.message"></span><span>X</span></p>
   
   <nav>
     <h1 class="visually-hidden">Main navigation</h1>

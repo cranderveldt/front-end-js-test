@@ -3,21 +3,19 @@ var CLINIKO_APP = angular.module("cliniko-test", []);
 
 // This is the creatively named 'helperService' which contains things that many of our
 // components need to use like helper functions for getting names and displaying date
-CLINIKO_APP.factory('helperService', ['$http', '$q', function($http, $q) {
+CLINIKO_APP.factory('helperService', function() {
   var service = this;
 
   // Gets the full name of any person, taking into account their title if they have one
   // Handles receiving an undefined person as a param so getFullNameByID fails gracefully
   service.getFullName = function(person) {
     var name = "";
-
     if (!angular.isUndefined(person)) {
       if (person.title) {
         name = name + person.title + " ";
       }
       name = name + person.first_name + " " + person.last_name
     }
-
     return name;
   };
 
@@ -27,15 +25,16 @@ CLINIKO_APP.factory('helperService', ['$http', '$q', function($http, $q) {
   };
 
   return service;
-}]);
+});
 
 // Single "Main" controller
-CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
-  function ($scope, $http, $timeout, helperService) {
+CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperService", 
+  function ($scope, $http, $q, $timeout, helperService) {
 
-  $scope.error = {
+  $scope.notice = {
     exists: false
     , message: ""
+    , type: "error"
   };
 
   $scope.current_view = "Patients";
@@ -64,10 +63,11 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService",
           , practitioner_id: practitioner_id
           , patient_id: patient.id
         }).then(function(response) {
-          response.data.full_name = name;
+          response.data.practitioner_name = name;
           $scope.selected_item.appointments.push(response.data);
+          $scope.triggerNotice("success", "New appointment added with " + name + " for " + helperService.getFullName(patient));
         }, function(data) {
-          $scope.triggerError("There was an error adding new appointment. The endpoint doesn't exist.");
+          $scope.triggerNotice("error","There was an error adding new appointment. The endpoint doesn't exist.");
         });
       }
     });
@@ -198,7 +198,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService",
       $http.get("http://localhost:3001/" + path + "/" + id).then(function(response) {
         resolve(response.data);
       }, function(data) {
-        $scope.triggerError("There was an error getting " + path + " data at id " + id + ".");
+        $scope.triggerNotice("error", "There was an error getting " + path + " data at id " + id + ".");
         reject();
       });
     });
@@ -239,14 +239,15 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService",
     $http.get(url).then(function(response) {
       closure(response.data);
     }, function(data) {
-      $scope.triggerError("There was an error getting patient data.");
+      $scope.triggerNotice("error", "There was an error getting patient data.");
     });
   };
 
   // Triggers error in console and for user
-  $scope.triggerError = function(message) {
-    $scope.error.exists = true;
-    $scope.error.message = message;
+  $scope.triggerNotice = function(type, message) {
+    $scope.notice.type = type;
+    $scope.notice.exists = true;
+    $scope.notice.message = message;
     console.log(message);
   };
 
