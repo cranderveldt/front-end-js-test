@@ -10,8 +10,8 @@ module.exports = function () {
       {
         id: 1,
         date: '2016-06-26T01:10:08.519Z',
-        practitioner_id: 1,
-        patient_id: 1
+        practitionerId: 1,
+        patientId: 1
       }
     ],
     practitioners: [
@@ -35,8 +35,8 @@ module.exports = function () {
     data.appointments.push({
       id: i,
       date: date,
-      practitioner_id: random(1, 10),
-      patient_id: random(1, 100)
+      practitionerId: random(1, 10),
+      patientId: random(1, 100)
     })
   }
   for (var i = 2; i < 101; i++) {
