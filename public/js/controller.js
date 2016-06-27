@@ -202,6 +202,8 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
     $scope.search.results = [];
     
     // Grab all appointments, all practitioners for each appointment
+    // We could use relational queries here but I think the way I have it set up now
+    // is cleaner and more modular
     $scope.loadCollection("appointments", query, function(appointments) {
       $scope.selected_item.appointments = appointments;
       if (appointments.length > 0) {
