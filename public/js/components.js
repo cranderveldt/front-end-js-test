@@ -52,7 +52,9 @@ CLINIKO_APP.component('ckAppointmentListing', {
       var id = appointment[$ctrl.relationWith + "_id"];
       var array = helperService.data[$ctrl.relationWith + "s"];
 
-      return helperService.getFullNameByID(array, id)
+      helperService.getFullNameByID($ctrl.relationWith + "s", id, function(name) {
+        return name;
+      });
     };
     
     $ctrl.displayDate = helperService.displayDate;

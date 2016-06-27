@@ -71,27 +71,23 @@ CLINIKO_APP.factory('helperService', ['$http', function($http) {
   };
 
   // Shorthand helper method for returning a fullname by an array and id
-  service.getFullNameByID = function(array, id) {
-    var person = service.getPersonByID(array, id);
-    return service.getFullName(person);
-  };
-
-  // Helper method for more modular markup
-  service.getPatientNameByID = function(id) {
-    var person = service.getPersonByID(service.data.patients, id);
-    return service.getFullName(person);
-  };
-
-  // Helper method for more modular markup
-  service.getPractitionerNameByID = function(id) {
-    var person = service.getPersonByID(service.data.practitioners, id);
-    return service.getFullName(person);
+  service.getFullNameByID = function(path, id, closure) {
+    service.getPersonByID(path, id).then(function(person) {
+      closure(service.getFullName(person));
+    }, closure);
   };
 
   // Generic get object by ID. Takes an array and an ID to look it up
   // If nothing is found, undefined is returned
-  service.getPersonByID = function(array, id) {
-    return _.findWhere(array, { id: id });
+  service.getPersonByID = function(path, id) {
+    return $q(function(resolve, reject) {
+      $http.get("http://localhost:3001/" + path + "/" + id).then(function(response) {
+        resolve(response.data);
+      }, function(data) {
+        service.triggerError("There was an error getting " + path + " data at id " + id + ".");
+        reject();
+      });
+    });
   };
 
   // Standardizes date formatting throughout the app
@@ -167,9 +163,10 @@ CLINIKO_APP.filter('appointment', ['helperService', function(helperService) {
     return _.filter(helperService.data.appointments, function(appointment) {
       var is_match = false;
 
-      var patient = helperService.getFullNameByID(helperService.data.patients, appointment.patient_id).toLowerCase();
-      var practitioner = helperService.getFullNameByID(helperService.data.practitioners, appointment.practitioner_id).toLowerCase();
-      
+
+      var patient = helperService.getFullName(_.findWhere(helperService.data.patients, { id: appointment.patient_id })).toLowerCase();
+      var practitioner = helperService.getFullName(_.findWhere(helperService.data.practitioners, { id: appointment.practitioner_id })).toLowerCase();
+
       for (var t in terms) {
         if (patient.includes(terms[t]) || practitioner.includes(terms[t])) {
           is_match = true;
@@ -206,19 +203,20 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
   // This is the theoretical POST function for adding a new appointment but since
   // there's no endpoint set up for adding a new apointment this is just an approximation
   $scope.addAppointment = function(patient, practitioner_id) {
-    var practitioner = helperService.getPractitionerNameByID(practitioner_id);
-    if (!angular.isUndefined(practitioner)) {
-      $http.post("http://localhost:3001/appointment/new", {
-        id: $scope.getNewAppointmentID()
-        , date: moment($scope.current_date).format()
-        , practitioner_id: practitioner_id
-        , patient_id: patient.id
-      }).then(function(response) {
-        console.log(response);
-      }, function(data) {
-        helperService.triggerError("There was an error adding new appointment. The endpoint doesn't exist.");
-      });
-    }
+    helperService.getFullNameByID("practitioners", practitioner_id, function(name) {
+      if (!angular.isUndefined(name)) {
+        $http.post("http://localhost:3001/appointment/new", {
+          id: $scope.getNewAppointmentID()
+          , date: moment($scope.current_date).format()
+          , practitioner_id: practitioner_id
+          , patient_id: patient.id
+        }).then(function(response) {
+          console.log(response);
+        }, function(data) {
+          helperService.triggerError("There was an error adding new appointment. The endpoint doesn't exist.");
+        });
+      }
+    });
   };
 
   // We need these two functions in the view, so we copy them from the service
