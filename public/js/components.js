@@ -48,17 +48,8 @@ CLINIKO_APP.component('ckAppointmentListing', {
   , controller: function($scope, $element, $attrs, helperService) {
     var $ctrl = this;
 
-    $ctrl.getFullNameByID = function(appointment) {
-      var id = appointment[$ctrl.relationWith + "_id"];
-      var array = helperService.data[$ctrl.relationWith + "s"];
-
-      helperService.getFullNameByID($ctrl.relationWith + "s", id, function(name) {
-        return name;
-      });
-    };
-    
     $ctrl.displayDate = helperService.displayDate;
     $ctrl.getFullName = helperService.getFullName;
   }
-  , templateUrl: "/components/appointment-list.html"
+  , templateUrl: "/components/appointment-listing.html"
 });

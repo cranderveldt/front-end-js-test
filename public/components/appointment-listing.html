@@ -4,7 +4,7 @@
   <ul ng-if="$ctrl.person.appointments.length > 0">
     <li ng-repeat="appointment in $ctrl.person.appointments">
       <span ng-bind="$ctrl.displayDate(appointment.date)"></span> with 
-      <span ng-bind="$ctrl.getFullNameByID(appointment)"></span>
+      <span ng-bind="appointment.full_name"></span>
     </li>
   </ul>
 </section>

@@ -41,7 +41,7 @@ var CLINIKO_APP = angular.module("cliniko-test", []);
 // This is the creatively named 'helperService' which contains things that many of our
 // components need to use like the loaded data and helper functions for getting names
 // and objects from IDs.
-CLINIKO_APP.factory('helperService', ['$http', function($http) {
+CLINIKO_APP.factory('helperService', ['$http', '$q', function($http, $q) {
   var service = this;
 
   service.error = {
@@ -219,6 +219,19 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
     });
   };
 
+  $scope.loadRelationalAppointmentData = function(appointments, path, key) {
+    var loadOneRelationship = function(index) {
+      helperService.getFullNameByID(path, appointments[index][key], function(name) {
+        appointments[index].full_name = name;
+        index = index + 1;
+        if (index < appointments.length) {
+          loadOneRelationship(index);
+        }
+      });
+    };
+    loadOneRelationship(0);
+  };
+
   // We need these two functions in the view, so we copy them from the service
   $scope.displayDate = helperService.displayDate;
   $scope.getFullName = helperService.getFullName;
@@ -291,7 +304,10 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
     $scope.selected_item = patient;
     $scope.search.term = "";
     $scope.search.results = [];
+    
+    // Grab all appointments, all practitioners for each appointment
     $scope.selected_item.appointments = _.where(helperService.data.appointments, { patient_id: patient.id });
+    $scope.loadRelationalAppointmentData($scope.selected_item.appointments, "practitioners", "practitioner_id")
   };
 
   // Selects a practitioner for the detail view section
@@ -299,7 +315,10 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$timeout", "helperService", 
     $scope.selected_item = practitioner;
     $scope.search.term = "";
     $scope.search.results = [];
+    
+    // Grab all appointments, all patients for each appointment
     $scope.selected_item.appointments = _.where(helperService.data.appointments, { practitioner_id: practitioner.id });
+    $scope.loadRelationalAppointmentData($scope.selected_item.appointments, "patients", "patient_id")
   };
 
   // Grab all the data on page load
