@@ -155,26 +155,58 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
     $scope.genericSearch(function() {
       var practitioner_ids = [];
       var patient_ids = [];
-      $scope.loadCollection('patients', { q: $scope.search.term }, function(patients_data) {
-        patient_ids = patients_data.map(function(p) { return p.id; });
-        $scope.loadCollection('practitioners', { q: $scope.search.term }, function(practitioners_data) {
-          practitioner_ids = practitioners_data.map(function(p) { return p.id; });
-          $scope.loadCollection('appointments', { patient_id: patient_ids, _sort: "date" }, function(patient_appointments) {
-            $scope.loadCollection('appointments', { practitioner_id: practitioner_ids, _sort: "date" }, function(practitioner_appointments) {
-              $scope.search.results = _.union(patient_appointments, practitioner_appointments);
-              
-              if ($scope.search.results.length > 0) {
-                $scope.loadRelationalAppointmentData($scope.search.results, "patients", "patient_id");
-                $scope.loadRelationalAppointmentData($scope.search.results, "practitioners", "practitioner_id");
-              }
 
-              $scope.search.searching = false;
+      // Set up a promise concurrently with practitioners query
+      var patient_promise = $q(function(resolve, reject) {
+        $scope.loadCollection('patients', { q: $scope.search.term }, function(patients_data) {
+          if (patients_data.length > 0) {
+            patient_ids = patients_data.map(function(p) { return p.id; });
+            $scope.loadCollection('appointments', { patient_id: patient_ids, _sort: "date" }, function(patient_appointments) {
+              resolve(patient_appointments);
             });
-          });
+          } else {
+            reject([])
+          }
         });
+      });
+
+      // Set up a promise concurrently with patients query
+      var practitioner_promise = $q(function(resolve, reject) {
+        $scope.loadCollection('practitioners', { q: $scope.search.term }, function(practitioners_data) {
+          if (practitioners_data.length > 0) {
+            practitioner_ids = practitioners_data.map(function(p) { return p.id; });
+            $scope.loadCollection('appointments', { practitioner_id: practitioner_ids, _sort: "date" }, function(practitioner_appointments) {
+              resolve(practitioner_appointments);
+            });
+          } else {
+            reject([])
+          }
+        });
+      });
+
+      // A promise to resolve the two promises
+      // Start by resolving patients, then resolve practitioners and combine the arrays
+      $q(function(resolve, reject) {
+        var combineData = function(patient_appointments) {
+          practitioner_promise.then(function(practitioner_appointments) {
+            resolve(_.union(patient_appointments, practitioner_appointments));
+          }, function(practitioner_appointments) {
+            resolve(_.union(patient_appointments, practitioner_appointments));
+          });
+        }
+        patient_promise.then(combineData, combineData);
+      }).then(function(results) {
+        $scope.search.searching = false;
+        $scope.search.results = results;
+
+        if ($scope.search.results.length > 0) {
+          $scope.loadRelationalAppointmentData($scope.search.results, "patients", "patient_id");
+          $scope.loadRelationalAppointmentData($scope.search.results, "practitioners", "practitioner_id");
+        }
       });
     });
   };
+
 
   // Selects a person for the detail view section
   $scope.selectPerson = function(person, query, relation_key) {
@@ -252,7 +284,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
   // Loads data from the API based on path and query
   $scope.loadCollection = function(path, query, closure) {
     var url = $scope.buildQueryURL(path, query);
-    
+
     $http.get(url).then(function(response) {
       closure(response.data);
     }, function(data) {
