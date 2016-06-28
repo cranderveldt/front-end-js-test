@@ -169,31 +169,22 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
 
       // Set up a promise concurrently with practitioners query
       // Don't reject anything, just resolve an empty array
-      var patient_promise = $q(function(resolve, reject) {
-        $scope.loadCollection('patients', $scope.generateSearchQuery($scope.search.term, { _embed: "appointments" }), function(patients_data) {
-          var appointments = [];
-          if (patients_data.length > 0) {
-            for (var p in patients_data) {
-              appointments = appointments.concat(patients_data[p].appointments);
-            }
-          } 
-          resolve(appointments);
+      var searchAppointmentsByGroup = function(path) {
+        return $q(function(resolve, reject) {
+          $scope.loadCollection(path, $scope.generateSearchQuery($scope.search.term, { _embed: "appointments" }), function(data) {
+            var appointments = [];
+            if (data.length > 0) {
+              for (var p in data) {
+                appointments = appointments.concat(data[p].appointments);
+              }
+            } 
+            resolve(appointments);
+          });
         });
-      });
+      };
 
-      // Set up a promise concurrently with patients query
-      // Don't reject anything, just resolve an empty array
-      var practitioner_promise = $q(function(resolve, reject) {
-        $scope.loadCollection('practitioners', $scope.generateSearchQuery($scope.search.term, { _embed: "appointments" }), function(practitioners_data) {
-          var appointments = [];
-          if (practitioners_data.length > 0) {
-            for (var p in practitioners_data) {
-              appointments = appointments.concat(practitioners_data[p].appointments);
-            }
-          } 
-          resolve(appointments);
-        });
-      });
+      var patient_promise = searchAppointmentsByGroup('patients');
+      var practitioner_promise = searchAppointmentsByGroup('practitioners');
 
       // Combine the data from the two promises
       // Don't have to worry about handling fail states, will always resolve
