@@ -124,10 +124,10 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
   };
 
   // The shared guts of the search logic
-  // If the term is over 2 chars and it's been 500ms since the last search,
-  // you can search again. At the end of 500s if the term has changed (i.e. someone
-  // was typing during the timeout), perform another search to update the results
-  // it also takes a function which is the specifics of each type of search
+  // If the term is over 2 chars and it's been 500ms since the last search and the text
+  // does not match the last search, you can search again. At the end of 500s if the term
+  // has changed (i.e. someone was typing during the timeout), perform another search to
+  // update the results it also takes a function which is the specifics of each type of search
   $scope.genericSearch = function(closure) {
     if ($scope.search.term.length > 2 && !$scope.search.timeout && $scope.search.term !== $scope.search.last) {
       
