@@ -211,6 +211,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
   $scope.selectPerson = function(person, query, relation_key) {
     $scope.selected_item = person;
     $scope.search.term = "";
+    $scope.search.last = "";
     $scope.search.results = [];
     
     // Grab all appointments, all practitioners for each appointment
