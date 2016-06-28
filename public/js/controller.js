@@ -193,7 +193,8 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
       // Don't have to worry about handling fail states, will always resolve
       patient_promise.then(function(patient_appointments) {
         practitioner_promise.then(function(practitioner_appointments) {
-          $scope.search.results = _.union(patient_appointments, practitioner_appointments);
+          // Can't sort appointments during query bc it's relational data, so we sort here
+          $scope.search.results = _.sortBy(_.union(patient_appointments, practitioner_appointments), "date");
           if ($scope.search.results.length > 0) {
             $scope.loadRelationalAppointmentData($scope.search.results, "patients", "patientId");
             $scope.loadRelationalAppointmentData($scope.search.results, "practitioners", "practitionerId");
