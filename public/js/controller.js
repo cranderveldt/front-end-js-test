@@ -48,6 +48,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
     , term: ""
     , timeout: false
     , results: []
+    , last: ""
   };
   $scope.selected_item = null;
   $scope.current_date = moment().format();
@@ -99,6 +100,7 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
   // we reset them when we change the view
   $scope.changeView = function(name) {
     $scope.search.term = "";
+    $scope.search.last = "";
     $scope.search.results = [];
     $scope.current_view = name;
     $scope.selected_item = null;
@@ -127,11 +129,11 @@ CLINIKO_APP.controller("Main", ["$scope", "$http", "$q", "$timeout", "helperServ
   // was typing during the timeout), perform another search to update the results
   // it also takes a function which is the specifics of each type of search
   $scope.genericSearch = function(closure) {
-    if ($scope.search.term.length > 2 && !$scope.search.timeout) {
+    if ($scope.search.term.length > 2 && !$scope.search.timeout && $scope.search.term !== $scope.search.last) {
       
       // Only search every 500ms
       var search_term = $scope.search.term;
-      $scope.search.timeout = true;
+      $scope.search.last = $scope.search.term;
       $scope.search.searching = true;
       $timeout(function() {
         $scope.search.timeout = false;
